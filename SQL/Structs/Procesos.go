@@ -6,11 +6,13 @@ import (
 )
 
 type ProcesosBDD struct {
+	ID               int    `json:"ID"`
 	Nombre           string `json:"Nombre"`
 	Folderid         int    `json:"Folderid"`
 	WarningTolerance int    `json:"WarningTolerance"`
 	ErrorTolerance   int    `json:"ErrorTolerance"`
 	FatalTolerance   int    `json:"FatalTolerance"`
+	OrganizacionId   int    `json:"OrganizacionId"`
 }
 
 type ProcessBDDArray struct {
