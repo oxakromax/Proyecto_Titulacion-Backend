@@ -1,4 +1,4 @@
-module Proyecto_Titulacion-Backend
+module github.com/oxakromax/Proyecto_Titulacion-Backend
 
 go 1.19
 
