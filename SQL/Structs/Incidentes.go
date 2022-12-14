@@ -34,11 +34,12 @@ import (
 //    owner to postgres;
 
 type Incidentes_Procesos struct {
-	ID        int    `json:"ID"`
-	ProcesoID int    `json:"ProcesoID"`
-	Incidente string `json:"Incidente"`
-	Tipo      int    `json:"Tipo"`
-	Estado    int    `json:"Estado"`
+	ID        int                  `json:"ID"`
+	ProcesoID int                  `json:"ProcesoID"`
+	Incidente string               `json:"Incidente"`
+	Tipo      int                  `json:"Tipo"`
+	Estado    int                  `json:"Estado"`
+	Detalles  []Incidentes_Detalle `json:"Detalles"`
 }
 
 type Incidentes_ProcesosArray struct {
@@ -62,16 +63,6 @@ func (i *Incidentes_ProcesosArray) Add(value Incidentes_Procesos) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	i.Incidentes_Procesos = append(i.Incidentes_Procesos, value)
-}
-
-func (i *Incidentes_ProcesosArray) Delete(value Incidentes_Procesos) {
-	i.mu.Lock()
-	defer i.mu.Unlock()
-	for index, v := range i.Incidentes_Procesos {
-		if v == value {
-			i.Incidentes_Procesos = append(i.Incidentes_Procesos[:index], i.Incidentes_Procesos[index+1:]...)
-		}
-	}
 }
 
 type Incidentes_Detalle struct {
