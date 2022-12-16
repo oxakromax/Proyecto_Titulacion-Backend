@@ -2,20 +2,6 @@ package Structs
 
 import "sync"
 
-//create table app.clientes
-//(
-//    id              serial
-//        primary key,
-//    nombre          varchar(50) not null,
-//    apellido        varchar(50) not null,
-//    email           varchar(50) not null,
-//    organizacion_id integer     not null
-//        references app.organizaciones
-//);
-//
-//alter table app.clientes
-//    owner to postgres;
-
 type Clientes struct {
 	ID             int    `json:"ID"`
 	Nombre         string `json:"Nombre"`

@@ -53,7 +53,7 @@ func GetProcesses(c *fiber.Ctx) error {
 			"error": err.Error(),
 		})
 	}
-	if c.Query("id") != "" {
+	if c.Query("id") != "" && c.Query("id") != "null" {
 		var process Structs.ProcesosBDD
 		selectSentence := `Select "id","nombre","folderid","organizacion_id","warning_tolerance","error_tolerance","fatal_tolerance" from "procesos" where "id"=$1`
 		err = db.QueryRow(selectSentence, c.Query("id")).Scan(&process.ID, &process.Nombre, &process.Folderid, &process.OrganizacionId, &process.WarningTolerance, &process.ErrorTolerance, &process.FatalTolerance)
@@ -66,6 +66,9 @@ func GetProcesses(c *fiber.Ctx) error {
 	}
 	ProcessArray := new(Structs.ProcessBDDArray)
 	selectSentence := `Select "id","nombre","folderid","organizacion_id","warning_tolerance","error_tolerance","fatal_tolerance" from "procesos"`
+	if c.Query("organizacion_id") != "" && c.Query("organizacion_id") != "null" {
+		selectSentence += " where organizacion_id=" + c.Query("organizacion_id")
+	}
 	rows, err := db.Query(selectSentence)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{
@@ -475,23 +478,35 @@ func main() {
 				"error": "No hay detalles, es de caracter obligatorio",
 			})
 		}
-		insertSentence := `INSERT INTO "incidentes_procesos" ("proceso_id","incidente","tipo","estado") VALUES ($1,$2,$3,$4)`
-		_, err = db.Exec(insertSentence, incidente.ProcesoID, incidente.Incidente, incidente.Tipo, incidente.Estado)
+		// Verificar que no exista un incidente abierto(1) o en curso(2) del proceso
+		selectSentence := `Select id, proceso_id, incidente, tipo, estado from "incidentes_procesos" where "proceso_id"=$1 and "estado" in (1,2)`
+		rows, err := db.Query(selectSentence, incidente.ProcesoID)
 		if err != nil {
 			return ctx.Status(500).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
+		defer rows.Close()
+		for rows.Next() {
+			var incidente Structs.Incidentes_Procesos
+			err = rows.Scan(&incidente.ID, &incidente.ProcesoID, &incidente.Incidente, &incidente.Tipo, &incidente.Estado)
+			if err != nil {
+				return ctx.Status(500).SendString(err.Error())
+			}
+			return ctx.Status(500).JSON(fiber.Map{
+				"error": "Ya existe un incidente abierto o en curso para el proceso",
+			})
+		}
 		idIncidente := 0
-		selectSentence := `Select id from "incidentes_procesos" where "proceso_id"=$1 and "incidente"=$2 and "tipo"=$3 and "estado"=$4`
-		err = db.QueryRow(selectSentence, incidente.ProcesoID, incidente.Incidente, incidente.Tipo, incidente.Estado).Scan(&idIncidente)
+		sentence := `select insertar_incidente_proceso($1,$2,$3,$4)`
+		err = db.QueryRow(sentence, incidente.ProcesoID, incidente.Incidente, incidente.Tipo, incidente.Estado).Scan(&idIncidente)
 		if err != nil {
 			return ctx.Status(500).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
 		for _, detalle := range incidente.Detalles {
-			insertSentence = `INSERT INTO "incidentes_detalle" ("incidente_id","detalle","fecha_inicio","fecha_fin") VALUES ($1,$2,$3,$4)`
+			insertSentence := `INSERT INTO "incidentes_detalle" ("incidente_id","detalle","fecha_inicio","fecha_fin") VALUES ($1,$2,$3,$4)`
 			_, err = db.Exec(insertSentence, idIncidente, detalle.Detalle, detalle.Fecha_Inicio, detalle.Fecha_Fin)
 			if err != nil {
 				return ctx.Status(500).JSON(fiber.Map{
@@ -502,7 +517,7 @@ func main() {
 		var emails []string
 		ProcessName := ""
 		selectSentence = `Select email,p.nombre from "usuarios" as users join procesos_usuarios pu on users.id = pu.usuario_id join procesos p on p.id = pu.proceso_id where p.id = $1`
-		rows, err := db.Query(selectSentence, incidente.ProcesoID)
+		rows, err = db.Query(selectSentence, incidente.ProcesoID)
 		if err != nil {
 			return ctx.Status(500).JSON(fiber.Map{
 				"error": err.Error(),
@@ -549,12 +564,12 @@ func main() {
 		}
 		msgbody := fmt.Sprintf("Se ha registrado un nuevo %s en el proceso %s. Por favor ingrese a la plataforma para ver los detalles.", tipo, ProcessName)
 		subject := fmt.Sprintf("Nuevo %s en el proceso %s, ID#%d", tipo, ProcessName, idIncidente)
-		err = SendMail(msgbody, subject, emails)
-		if err != nil {
-			return ctx.Status(500).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
+		go func() {
+			err := SendMail(msgbody, subject, emails)
+			if err != nil {
+				fmt.Println(err)
+			}
+		}()
 		return ctx.JSON(fiber.Map{
 			"message": "Incidente creado",
 			"id":      idIncidente,

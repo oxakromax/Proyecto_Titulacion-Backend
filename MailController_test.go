@@ -17,7 +17,7 @@ func TestSendMail(t *testing.T) {
 			name: "Test 1",
 			args: args{
 				body:    "Test 1",
-				to:      []string{"nicolasxd147@gmail.com", "gabrielbrogescast@gmail.com"},
+				to:      []string{"nicolasxd147@gmail.com"},
 				subject: "Test 1",
 			},
 			wantErr: false,

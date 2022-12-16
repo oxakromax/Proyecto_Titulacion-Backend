@@ -38,6 +38,12 @@ func (a *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 
 func SendMail(body, subject string, to []string) error {
 
+	if len(to) == 0 {
+		return errors.New("no one to send the email to")
+	}
+	// filter repeated emails
+	to = removeDuplicates(to)
+
 	// Sender data.
 	from := "monitordeprocesos@outlook.com"
 	password := "Monitor123!"
@@ -83,4 +89,16 @@ func SendMail(body, subject string, to []string) error {
 	}
 	fmt.Println("Email Sent!")
 	return nil
+}
+
+func removeDuplicates(to []string) []string {
+	keys := make(map[string]bool)
+	var list []string
+	for _, entry := range to {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }
