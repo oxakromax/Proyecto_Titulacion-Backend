@@ -93,10 +93,14 @@ func main() {
 	Utils.QueryAuth.ClientSecret = os.Getenv("APP-Secret")
 	Utils.QueryAuth.Scope = os.Getenv("APP-Scope")
 	Utils.UipathOrg.Id = os.Getenv("Orchestrator-ID")
+	Port := os.Getenv("PORT")
 	if err != nil {
 		return
 	}
 	app := fiber.New()
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Hello, World!")
+	})
 	app.Get("/Processes", GetProcesses)
 	app.Post("/Processes", PostProcesses)
 	app.Get("/Clientes", func(ctx *fiber.Ctx) error {
@@ -671,7 +675,10 @@ func main() {
 		}
 		return ctx.Status(200).JSON(usuarios)
 	})
-	err = app.Listen(":3000")
+	if Port == "" {
+		Port = "3000"
+	}
+	err = app.Listen(":" + Port)
 	if err != nil {
 		return
 	}

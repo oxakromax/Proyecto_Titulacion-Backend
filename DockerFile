@@ -1,0 +1,22 @@
+FROM golang:latest
+
+# Establecemos las variables de entorno
+ENV APP_ID c68d9f9d-abe4-4f84-8178-4267ad6fe447
+ENV POSTGRE_DB Proyecto
+ENV POSTGRE_PASS Nh52895390
+ENV POSTGRE_PORT 5432
+ENV APP_SCOPE OR.Webhooks OR.Monitoring OR.Monitoring OR.ML OR.Tasks OR.Analytics OR.Folders OR.BackgroundTasks OR.TestSets OR.TestSetExecutions OR.TestSetSchedules OR.TestDataQueues OR.Audit OR.License OR.Settings OR.Robots OR.Machines OR.Execution OR.Assets OR.Administration OR.Users OR.Jobs OR.Queues OR.Hypervisor
+ENV APP_SECRET PyRahZliqlAc3)Q(
+ENV POSTGRE_USER postgres
+ENV POSTGRE_HOST 86.48.29.103
+ENV ORCHESTRATOR_ID 1
+
+# Creamos el directorio de trabajo en el contenedor y copiamos el código allí
+WORKDIR /app
+COPY . .
+
+# Compilamos el proyecto
+RUN go build -o main .
+
+# Ejecutamos la aplicación
+CMD ["./main"]
